@@ -4,13 +4,18 @@
         <template id="portal_my_home_menu_timeoff" name="Portal layout : TimeOFF menu"
                   inherit_id="portal.portal_breadcrumbs" priority="80">
             <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
-                <li t-if="page_name == 'timeoffs'" t-attf-class="breadcrumb-item #{'active ' if not payslip else ''}">
-                    <a t-if="payslips" t-attf-href="/my/timeoffs?{{ keep_query() }}">TimeOffs</a>
+                <li t-if="page_name == 'timeoffs'" t-attf-class="breadcrumb-item #{'active ' if not timeoff else ''}">
+                    <a t-if="timeoffs" t-attf-href="/my/timeoffs?{{ keep_query() }}">TimeOffs</a>
                     <t t-else="">TimeOffs</t>
                 </li>
                 <li t-if="timeoff" class="breadcrumb-item active">
                     <t t-out="timeoff.name" t-if="timeoff.name != '/'"/>
 
+                </li>
+                <li t-if="page_name == 'create_timeoff_request'"
+                    t-attf-class="breadcrumb-item #{'active ' if not timeoff else ''}">
+
+                    Create Time Off Request
                 </li>
             </xpath>
         </template>
@@ -36,30 +41,12 @@
 
                 </t>
 
-                <t t-call="portal.portal_docs_entry">
-                    <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
-                       style="max-height:50px; max-weight:50px;"/>
-                    <t t-set="title">Apply Time Offs</t>
-                    <t t-set="url" t-value="'/my/payslips'"/>
-                    <t t-set="text">Submit Your Leave Application</t>
-                    <t t-set="placeholder_count" t-value="'payslip_count'"/>
-
-                </t>
-
-                <t t-call="portal.portal_docs_entry">
-                    <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
-                       style="max-height:50px; max-weight:50px;"/>
-                    <t t-set="title">My Leave Allocations</t>
-                    <t t-set="url" t-value="'/my/payslips'"/>
-                    <t t-set="text">My Leave Allocations</t>
-                    <t t-set="placeholder_count" t-value="'payslip_count'"/>
-
-                </t>
             </div>
         </template>
 
 
         <template id="portal_my_time_offs" name="My Time Offs">
+
             <ul class="d-none">
                 <li>
                     <code>self</code>
@@ -104,6 +91,7 @@
 
                         </tr>
                     </thead>
+
                     <tbody>
                         <t t-foreach="timeoffs" t-as="timeoff">
                             <tr>
@@ -111,6 +99,7 @@
 
                                 <td>
                                     <span t-field="timeoff.holiday_status_id.name"/>
+                                    <span t-field="timeoff.id"/>
                                 </td>
                                 <td>
                                     <span t-field="timeoff.request_date_from"/>
@@ -147,10 +136,44 @@
                                        t-value="timeoff.request_date_from &gt; datetime.datetime.today().date()"/>
                                     <t t-if="timeoff.state == 'confirm' and date_condition">
                                         <t t-set="state_class" t-value="'badge rounded-pill bg-primary'"/>
-                                        <button class="btn btn-danger btn-sm"
-                                                t-attf-onclick="location.href='/my/timeoffs/delete/#{timeoff.id}'">
-                                            <icon class="fa fa-fw fa-trash"></icon>
-                                        </button>
+                                        <div>
+                                            <button class="btn btn-danger btn-sm"
+                                                    t-attf-onclick="confirmDelete() ">
+                                                <icon class="fa fa-fw fa-trash position-relative"></icon>
+                                                <t t-esc="timeoff.holiday_status_id.name"/>
+                                            </button>
+                                            <!--                                          t-attf-onclick="location.href='/my/timeoffs/delete/#{timeoff.id}'">-->
+                                            <div id="deleteOverlay"
+                                                 class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 z-9997"/>
+
+                                            <div class="alert d-none alert-info text-center pop-up position-absolute  top-0 start-0 z-9998 w-100 mx-auto p-4"
+                                                 role="alert" id="deleteAlertPopup">
+                                                <span class="my-3">
+                                                    Are you sure you want to delete this time off request
+                                                    <strong>
+                                                        <t t-esc="timeoff.holiday_status_id.name"/>
+                                                    </strong>
+                                                    From
+                                                    <strong>
+                                                        <t t-esc="timeoff.request_date_from"/>
+                                                    </strong>
+                                                    To
+                                                    <strong>
+                                                        <t t-esc="timeoff.request_date_to"/>
+                                                    </strong>
+                                                    ?
+                                                </span>
+
+                                                <br/>
+
+                                                <button class="btn btn-danger mt-3 mb-1" type="button"
+                                                        t-attf-onclick="buttonDelete(#{timeoff.id})">Yes Delete
+                                                </button>
+                                                <button class="btn btn-primary  mt-3 mb-1" type="button"
+                                                        onclick="cancelDelete()">No Keep it
+                                                </button>
+                                            </div>
+                                        </div>
 
                                     </t>
 
@@ -171,12 +194,37 @@
                         </t>
                     </tbody>
                 </t>
+
+                <div class="row">
+                    <div class="card col-md-4 col-sm-12 m-2">
+                        <div class="card-body">
+                            <h5 class="card-title text-center text-primary">
+                                Paid Time offs
+                            </h5>
+                            <div class="card-text text-center">
+
+                                <span class="text-info">Allocated Days :12.0</span>
+
+                            </div>
+                            <div class="card-text text-center">
+                                <span class="text-info fw-100">Remaining Days :8.0</span>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <script type="text/javascript" src="/employee_portal/static/src/js/timeoff_request.js"></script>
             </t>
+
         </template>
 
 
         <template id="portal_my_time_offs_create" name="My Time Offs View">
-            <form class="form-control-dark" t-attf-action="/my/timeoffs/create/request" method="post">
+            <form class="form-card needs-validation" novalidate="novalidate" t-attf-action="/my/timeoffs/create/request"
+                  method="post"
+                  enctype="multipart/form-data">
                 <t t-call="portal.portal_layout">
                     <t t-set="breadcrumbs_searchbar" t-value="True"/>
 
@@ -187,40 +235,60 @@
                     <div class="o_portal_form_container">
                         <div class="form-card p2">
                             <h2 class="text-center mb-4">
-                                    Request Your Time Off
+                                Request Your Time Off
                             </h2>
                             <div claas="card">
-                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <label for="holiday_status_id" class="m-2">Leave Type</label>
-                            <select class="form-select" name="holiday_status_id" id="holiday_status_id" required="1">
 
-                                <option value="">Select Leave Type</option>
-                                <t t-foreach="leave_types" t-as="leave">
-                                    <option t-att-value="leave.id" t-esc="leave.display_name"/>
-                                </t>
-                            </select>
 
-                            <label for="request_date_from" class="m-2">Start Date</label>
-                            <input type="date" class="form-control" name="request_date_from"
-                                   id="request_date_from" t-att-min="str(datetime.datetime.today().date())" required="1" />
-                            <label for="request_date_to" class="m-2" >End Date</label>
-                            <input type="date" class="form-control" name="request_date_to" t-att-min="str(datetime.datetime.today().date())"
-                                   id="request_date_to" required="1"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <label for="holiday_status_id" class="m-2">Leave Type</label>
+                                <select class="form-select" name="holiday_status_id" id="holiday_status_id" required="1"
+                                        onchange="on_change_leave_type(this)">
 
-                            <label for="description" class="m-2">Description</label>
+                                    <!--                                    <option value="">Select Leave Type</option>-->
+                                    <t t-foreach="leave_types" t-as="leave">
+                                        <option t-att-value="leave.id" t-att-data-document="leave.support_document">
+                                            <t t-esc="leave.display_name"/>
+
+
+                                        </option>
+                                    </t>
+                                </select>
+
+                                <label for="request_date_from" class="m-2">Start Date</label>
+                                <input type="date" class="form-control" name="request_date_from"
+                                       id="request_date_from" t-att-min="str(datetime.datetime.today().date())"
+                                       required="1"/>
+                                <div class="invalid-feedback">
+                                    Date From is required.
+                                </div>
+                                <label for="request_date_to" class="m-2">End Date</label>
+                                <input type="date" class="form-control" name="request_date_to"
+                                       t-att-min="str(datetime.datetime.today().date())"
+                                       id="request_date_to" required="1"/>
+                                <div class="invalid-feedback">
+                                    Date To is required.
+                                </div>
+
+                                <label for="description" class="m-2">Description</label>
                                 <input type="text" class="form-control" name="description"
-                                   id="description" placeholder="Enter a description for your time off request"/>
+                                       id="description" placeholder="Enter a description for your time off request"/>
+                                <label for="document_attachment" id="attachment_label" class="m-2 ">Document</label>
+                                <input type="file" class="form-control" name="document_attachment"
+                                       id="document_attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"/>
+                                <button type="buttin" class="btn btn-muted mt-3 float-end"
+                                        onclick="buttonCancel(event)">Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary mt-3 float-end">Submit</button>
 
 
-                             <button class="btn btn-muted mt-3 float-end">Cancel</button>
-                            <button type="submit" class="btn btn-primary mt-3 float-end">Submit</button>
-
-
+                            </div>
                         </div>
-                    </div>
                     </div>
                 </t>
             </form>
+
+            <script type="text/javascript" src="/employee_portal/static/src/js/timeoff_request.js"></script>
 
         </template>
 

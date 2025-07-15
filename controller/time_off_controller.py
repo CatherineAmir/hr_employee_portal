@@ -6,6 +6,7 @@ from odoo import fields, http, _
 from odoo.osv import expression
 from collections import OrderedDict
 from odoo.exceptions import AccessError, MissingError
+import pybase64
 
 
 class EmployeeTimeOffPortal(CustomerPortal):
@@ -50,13 +51,24 @@ class EmployeeTimeOffPortal(CustomerPortal):
         ])
         domain = expression.AND([domain, [('employee_id', '=', employee_id.id)]])
         searchbar_sortings = {
-            'date': {'label': _('Date'), 'order': 'request_date_from desc'}}
+            'date': {'label': _('Date'), 'order': 'request_date_from desc'},
+            'last_update': {'label': _('Last Update'), 'order': 'write_date desc'},
+        }
         # default sort by order
         if not sortby:
-            sortby = 'date'
+            sortby = 'last_update'
         order = searchbar_sortings[sortby]['order']
 
-        searchbar_filters = {'all': {'label': _('All'), 'domain': []}}
+        searchbar_filters = {
+            'all': {'label': _('All'), 'domain': []},
+            'to_approve': {'label': _('To Approve'), 'domain': [("state", 'in', ['confirm', 'validate1'])]},
+            'refuse': {'label': _('Refuse'), 'domain': [("state", '=', 'refuse')]},
+            'approved': {'label': _('Approved'), 'domain': [("state", '=', 'validate')]},
+            'cancellation_request': {'label': _('Cancellation Request'),
+                                     'domain': [("state", '=', 'cancellation_request')]},
+            'cancel': {'label': _('Cancelled'), 'domain': [("state", '=', 'cancel')]},
+
+        }
         # default filter by value
         if not filterby:
             filterby = 'all'
@@ -91,8 +103,8 @@ class EmployeeTimeOffPortal(CustomerPortal):
     def portal_offs_delete(self, id=0, **kw):
         user_id = request.env.user
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
-        leave_id=request.env["hr.leave"].browse(id)
-        if leave_id.employee_id.id==employee_id.id:
+        leave_id = request.env["hr.leave"].browse(id)
+        if leave_id.employee_id.id == employee_id.id:
             leave_id.unlink()
         return redirect('/my/timeoffs')
 
@@ -102,9 +114,8 @@ class EmployeeTimeOffPortal(CustomerPortal):
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
         leave_id = request.env["hr.leave"].browse(id)
         if leave_id.employee_id.id == employee_id.id:
-
             leave_id.sudo().write({
-            'state': 'cancellation_request'
+                'state': 'cancellation_request'
             })
 
         return redirect('/my/timeoffs')
@@ -114,45 +125,55 @@ class EmployeeTimeOffPortal(CustomerPortal):
         user_id = request.env.user
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
 
-        context={
+        context = {
             'employee_id': employee_id.id,
         }
-        employee_company_id=employee_id.company_id
+        employee_company_id = employee_id.company_id
 
-        domain=[
+        domain = [
             ('company_id', 'in', [employee_company_id.id, False]),
             '|',
-                ('requires_allocation', '=', 'no'),
-                ('has_valid_allocation', '=', True),
+            ('requires_allocation', '=', 'no'),
+            ('has_valid_allocation', '=', True),
         ]
-        leave_type=request.env["hr.leave.type"].sudo().with_context(context).search(domain)
-        values={
-            "employee_id":employee_id,
-            'leave_types':leave_type,
+        leave_type = request.env["hr.leave.type"].sudo().with_context(context).search(domain)
+        values = {
+            "employee_id": employee_id,
+            'leave_types': leave_type,
+            'page_name': 'create_timeoff_request',
 
         }
 
+        return request.render("employee_portal.portal_my_time_offs_create", values)
 
-        return request.render("employee_portal.portal_my_time_offs_create",values)
-
-
-
-    @http.route(['/my/timeoffs/create/request'],type='http', auth="user", website=True,methods=['POST'], csrf=False)
+    @http.route(['/my/timeoffs/create/request'], type='http', auth="user", website=True, methods=['POST'], csrf=False)
     def create_timeoff_request(self, **kw):
+        print("kw", kw)
         user_id = request.env.user
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
 
-        request_id=request_id=request.env['hr.leave'].sudo().with_context({
+        request_id = request_id = request.env['hr.leave'].sudo().with_context({
             'employee_id': employee_id.id,
         }).create({
             "employee_id": employee_id.id,
-            'request_date_from':kw['request_date_from'],
-            'request_date_to':kw['request_date_to'],
-            'holiday_status_id':int(kw['holiday_status_id']),
-            'description':kw['description'],
-
+            'request_date_from': kw['request_date_from'],
+            'request_date_to': kw['request_date_to'],
+            'holiday_status_id': int(kw['holiday_status_id']),
+            'name': kw['description'],
         })
 
+        file = kw.get('document_attachment', False)
+        if file:
+            name = kw.get('document_attachment').filename
+            Attachments = request.env['ir.attachment']
+            file = kw.get('document_attachment', False)
+            attachment_id = Attachments.sudo().create({
+                'name': name,
+                'res_name': name,
+                'type': 'binary',
+                'res_model': "hr.leave",
+                'res_id': request_id.id,
+                'datas': pybase64.b64encode(file.read()),
+            })
+
         return redirect('/my/timeoffs')
-
-
