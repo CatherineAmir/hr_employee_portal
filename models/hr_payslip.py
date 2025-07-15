@@ -3,8 +3,8 @@ from odoo import fields, models, api
 
 class Payslip(models.Model):
     _name = 'hr.payslip'
-    _inherit = ['hr.payslip', 'portal.mixin', 'mail.thread.main.attachment', 'mail.activity.mixin', 'sequence.mixin',
-                'product.catalog.mixin']
+    _inherit = ['hr.payslip', 'portal.mixin', 'mail.thread.main.attachment', 'mail.activity.mixin',
+               ]
     publish_payslip=fields.Boolean(string="Publish Payslip",default=False)
 
     def _compute_access_url(self):

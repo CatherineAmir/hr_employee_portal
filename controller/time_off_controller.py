@@ -139,7 +139,6 @@ class EmployeeTimeOffPortal(CustomerPortal):
 
     @http.route(['/my/timeoffs/create/request'],type='http', auth="user", website=True,methods=['POST'], csrf=False)
     def create_timeoff_request(self, **kw):
-        print("kw",kw)
         user_id = request.env.user
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
 
@@ -153,7 +152,7 @@ class EmployeeTimeOffPortal(CustomerPortal):
             'description':kw['description'],
 
         })
-        print("request_id",request_id)
+
         return redirect('/my/timeoffs')
 
 
