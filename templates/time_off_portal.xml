@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="portal_my_home_menu_timeoff" name="Portal layout : TimeOFF menu"
+                  inherit_id="portal.portal_breadcrumbs" priority="80">
+            <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+                <li t-if="page_name == 'timeoffs'" t-attf-class="breadcrumb-item #{'active ' if not payslip else ''}">
+                    <a t-if="payslips" t-attf-href="/my/timeoffs?{{ keep_query() }}">TimeOffs</a>
+                    <t t-else="">TimeOffs</t>
+                </li>
+                <li t-if="timeoff" class="breadcrumb-item active">
+                    <t t-out="timeoff.name" t-if="timeoff.name != '/'"/>
+
+                </li>
+            </xpath>
+        </template>
+
+
+        <template id="portal_my_home_time_off" name="Time Offs" inherit_id="portal.portal_my_home"
+                  customize_show="True">
+            <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+                <t t-set="portal_service_category_enable" t-value="True"/>
+            </xpath>
+
+
+            <div id="portal_service_category" position="inside">
+
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
+                       style="max-height:50px; max-weight:50px;"/>
+                    <t t-set="title">My Time Offs</t>
+                    <t t-set="url" t-value="'/my/timeoffs'"/>
+
+                    <t t-set="text">View and Manage Your time offs</t>
+                    <t t-set="placeholder_count" t-value="'payoff_count'"/>
+
+                </t>
+
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
+                       style="max-height:50px; max-weight:50px;"/>
+                    <t t-set="title">Apply Time Offs</t>
+                    <t t-set="url" t-value="'/my/payslips'"/>
+                    <t t-set="text">Submit Your Leave Application</t>
+                    <t t-set="placeholder_count" t-value="'payslip_count'"/>
+
+                </t>
+
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
+                       style="max-height:50px; max-weight:50px;"/>
+                    <t t-set="title">My Leave Allocations</t>
+                    <t t-set="url" t-value="'/my/payslips'"/>
+                    <t t-set="text">My Leave Allocations</t>
+                    <t t-set="placeholder_count" t-value="'payslip_count'"/>
+
+                </t>
+            </div>
+        </template>
+
+
+        <template id="portal_my_time_offs" name="My Time Offs">
+            <ul class="d-none">
+                <li>
+                    <code>self</code>
+                    (the set of records to compute)
+                </li>
+                <li>
+                    <code>datetime</code>
+                    (Python module)
+                </li>
+                <li>
+                    <code>dateutil</code>
+                    (Python module)
+                </li>
+                <li>
+                    <code>time</code>
+                    (Python module)
+                </li>
+            </ul>
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+                <t t-call="portal.portal_searchbar">
+                    <t t-set="title">TimeOFFs</t>
+                </t>
+                <t t-if="not timeoffs">
+                    <p class="alert alert-warning">There are currently no timeoffs requests , Create Time off Now !.</p>
+                </t>
+
+
+                <button class="btn btn-primary mb-3"
+                        t-attf-onclick="location.href='/my/timeoffs/create'">Create Time Off Request
+                </button>
+                <t t-if="timeoffs" t-call="portal.portal_table">
+                    <thead>
+                        <tr class="active">
+                            <th name="leave_time">Leave Type</th>
+                            <th name="start_date">Start Date</th>
+                            <th name="end_date">End Date</th>
+                            <th name="status">Status</th>
+                            <th name="actions">Actions</th>
+
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="timeoffs" t-as="timeoff">
+                            <tr>
+
+
+                                <td>
+                                    <span t-field="timeoff.holiday_status_id.name"/>
+                                </td>
+                                <td>
+                                    <span t-field="timeoff.request_date_from"/>
+                                </td>
+                                <td>
+                                    <span t-field="timeoff.request_date_to"/>
+                                </td>
+                                <td>
+                                    <t t-if="timeoff.state == 'refuse'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-danger'"/>
+                                    </t>
+                                    <t t-elif="timeoff.state == 'validate'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-success'"/>
+                                    </t>
+                                    <t t-elif="timeoff.state == 'cancel'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-secondary'"/>
+                                    </t>
+                                    <t t-elif="timeoff.state == 'confirm'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-primary'"/>
+                                    </t>
+                                    <t t-elif="timeoff.state == 'validate1'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-info'"/>
+                                    </t>
+                                    <t t-elif="timeoff.state == 'cancellation_request'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-warning'"/>
+                                    </t>
+
+
+                                    <span t-field="timeoff.state" t-att-class="state_class"/>
+
+                                </td>
+                                <td>
+                                    <t t-set="date_condition"
+                                       t-value="timeoff.request_date_from &gt; datetime.datetime.today().date()"/>
+                                    <t t-if="timeoff.state == 'confirm' and date_condition">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-primary'"/>
+                                        <button class="btn btn-danger btn-sm"
+                                                t-attf-onclick="location.href='/my/timeoffs/delete/#{timeoff.id}'">
+                                            <icon class="fa fa-fw fa-trash"></icon>
+                                        </button>
+
+                                    </t>
+
+
+                                    <t t-if="timeoff.state in ['validate', 'validate1'] and date_condition">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-primary'"/>
+                                        <button class="btn btn-warning btn-sm"
+                                                t-attf-onclick="location.href='/my/timeoffs/cancel/#{timeoff.id}'">
+                                            Request Cancellation
+                                        </button>
+
+                                    </t>
+
+
+                                </td>
+                            </tr>
+
+                        </t>
+                    </tbody>
+                </t>
+            </t>
+        </template>
+
+
+        <template id="portal_my_time_offs_create" name="My Time Offs View">
+            <form class="form-control-dark" t-attf-action="/my/timeoffs/create/request" method="post">
+                <t t-call="portal.portal_layout">
+                    <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+                    <t t-call="portal.portal_searchbar">
+                        <t t-set="title">Create Time Off</t>
+                    </t>
+
+                    <div class="o_portal_form_container">
+                        <div class="form-card p2">
+                            <h2 class="text-center mb-4">
+                                    Request Your Time Off
+                            </h2>
+                            <div claas="card">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <label for="holiday_status_id" class="m-2">Leave Type</label>
+                            <select class="form-select" name="holiday_status_id" id="holiday_status_id" required="1">
+
+                                <option value="">Select Leave Type</option>
+                                <t t-foreach="leave_types" t-as="leave">
+                                    <option t-att-value="leave.id" t-esc="leave.display_name"/>
+                                </t>
+                            </select>
+
+                            <label for="request_date_from" class="m-2">Start Date</label>
+                            <input type="date" class="form-control" name="request_date_from"
+                                   id="request_date_from" t-att-min="str(datetime.datetime.today().date())" required="1" />
+                            <label for="request_date_to" class="m-2" >End Date</label>
+                            <input type="date" class="form-control" name="request_date_to" t-att-min="str(datetime.datetime.today().date())"
+                                   id="request_date_to" required="1"/>
+
+                            <label for="description" class="m-2">Description</label>
+                                <input type="text" class="form-control" name="description"
+                                   id="description" placeholder="Enter a description for your time off request"/>
+
+
+                             <button class="btn btn-muted mt-3 float-end">Cancel</button>
+                            <button type="submit" class="btn btn-primary mt-3 float-end">Submit</button>
+
+
+                        </div>
+                    </div>
+                    </div>
+                </t>
+            </form>
+
+        </template>
+
+
+    </data>
+</odoo>

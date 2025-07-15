@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View -->
+    <record id="hr_employee_view_form_2" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Add fields to an existing group -->
+            <xpath expr="//page[@name='hr_settings']//field[@name='user_id']" position="attributes">
+                <attribute name="domain">[('company_ids', 'in', company_id)]</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_create_user']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Add a new page to the notebook -->
+
+        </field>
+    </record>
+
+
+    <record id="hr_employee_view_form_work_entry" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_work_entry.hr_employee_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add fields to an existing group -->
+            <xpath expr="//button[@name='action_open_work_entries']" position="attributes">
+                <attribute name="groups">hr.group_hr_user</attribute>
+            </xpath>
+            <xpath expr="//field[@name='resource_calendar_id']" position="attributes">
+                <attribute name="groups">hr.group_hr_user</attribute>
+            </xpath>
+
+            <xpath position="attributes" expr="//widget[@name='contract_warning_tooltip']">
+                <attribute name="groups">hr.group_hr_user,base.group_system</attribute>
+            </xpath>
+            <!-- Add a new page to the notebook -->
+
+        </field>
+    </record>
+    <record id="action_create_user_portal" model="ir.actions.server">
+        <field name="name">Create Portal User</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_hr_employee"/>
+        <field name="binding_model_id" ref="model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">action = records.create_user_portal()</field>
+    </record>
+
+
+    <!-- Inherit List View -->
+
+</odoo>

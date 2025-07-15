@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View -->
+    <record id="hr_payslip_view_form" model="ir.ui.view">
+        <field name="name">hr.payslip.view.form.inherit.module</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <!-- Add fields to an existing group -->
+            <xpath expr="//field[@name='struct_id']" position="after">
+                <field name="publish_payslip" widget="boolean_toggle"/>
+            </xpath>
+
+        </field>
+    </record>
+    
+    <!-- Inherit List View -->
+    <record id="hr_payslip_view_list" model="ir.ui.view">
+        <field name="name">hr.payslip.view.list.inherit.module</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='net_wage']" position="after">
+                <field name="publish_payslip"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <record id="action_publish_payslip" model="ir.actions.server">
+            <field name="name">Publish Payslip</field>
+            <field name="model_id" ref="employee_portal.model_hr_payslip"/>
+            <field name="binding_model_id" ref="employee_portal.model_hr_payslip"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">action = records.publish_payslip_on_website()</field>
+        </record>
+
+    <record id="action_un_publish_payslip" model="ir.actions.server">
+            <field name="name">Un Publish Payslip</field>
+            <field name="model_id" ref="employee_portal.model_hr_payslip"/>
+            <field name="binding_model_id" ref="employee_portal.model_hr_payslip"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">action = records.unpublish_payslip_on_website()</field>
+        </record>
+
+</odoo>

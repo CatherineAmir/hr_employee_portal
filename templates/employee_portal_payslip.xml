@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_my_home_menu_payslip" name="Portal layout : payslip menu"
+              inherit_id="portal.portal_breadcrumbs" priority="80">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'payslips'" t-attf-class="breadcrumb-item #{'active ' if not payslip else ''}">
+                <a t-if="payslips" t-attf-href="/my/payslips?{{ keep_query() }}">Payslips</a>
+                <t t-else="">Payslips</t>
+            </li>
+            <li t-if="payslip" class="breadcrumb-item active">
+                <t t-out="payslip.name" t-if="payslip.name != '/'"/>
+
+            </li>
+        </xpath>
+    </template>
+
+    <template id="portal_my_home_payslip" name="Payslips" inherit_id="portal.portal_my_home" customize_show="True"
+              priority="80">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_client_category_enable" t-value="False"/>
+            <t t-set="portal_vendor_category_enable" t-value="False"/>
+        </xpath>
+        <div id="portal_service_category" position="inside">
+
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
+                   style="max-height:50px; max-weight:50px;"/>
+                <t t-set="title">Your Payslips</t>
+                <t t-set="url" t-value="'/my/payslips'"/>
+                <t t-set="text">Check Your Payslips</t>
+                <t t-set="placeholder_count" t-value="'payslip_count'"/>
+            </t>
+        </div>
+
+
+
+    </template>
+    <template id="remove_invoices_over_due" inherit_id="account_payment.portal_my_home_account_payment"
+              customize_show="True">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_alert_category_enable" t-value="True"/>
+        </xpath>
+
+    </template>
+
+    <template id="portal_my_payslips" name="My Payslips">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Payslips</t>
+            </t>
+            <t t-if="not payslips">
+                <p class="alert alert-warning">There are currently no payslips your account.</p>
+            </t>
+            <t t-if="payslips" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th name="name">Payslip Name</th>
+                        <th name="payslip_run_id">Batch Name</th>
+                        <th name="employee_id">Employee Name</th>
+                        <th name="gross_wage" class='d-none d-md-table-cell'>Gross Wage</th>
+                        <th name="net_wage" class="text-end pe-3">Net Wage</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="payslips" t-as="payslip">
+                        <tr>
+
+
+                        <td>
+                            <a t-att-href="payslip.get_portal_url()" t-att-title="payslip.name">
+                                <t t-out="payslip.name" t-if="payslip.name != '/'"/>
+                                <!--                                <em t-else="">Draft Invoice</em>-->
+                            </a>
+
+
+                            <!--                            <a t-attf-href="/my/payslips/#{payslip.id}?{{ keep_query() }}">-->
+                            <!--                                <span t-field="payslip.name"/>-->
+                            <!--                            </a>-->
+                        </td>
+                        <td>
+                            <span t-field="payslip.payslip_run_id.name"/>
+                        </td>
+                        <td>
+                            <span t-field="payslip.employee_id.name"/>
+                        </td>
+                        <td class='d-none d-md-table-cell'>
+                            <span t-field="payslip.gross_wage"/>
+                        </td>
+                        <td class="text-end pe-3">
+                            <span t-field="payslip.net_wage"/>
+                        </td>
+                         </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+
+    <template id="portal_payslip_page" name="Payslip" inherit_id="portal.portal_sidebar" primary="True">
+        <xpath expr="//div[hasclass('o_portal_sidebar')]" position="inside">
+
+
+            <div class="row o_portal_invoice_sidebar">
+                <!-- Sidebar -->
+                <t t-call="portal.portal_record_sidebar">
+                    <t t-set="classes" t-value="'col-lg-4 col-xxl-3 d-print-none'"/>
+                    <t t-set="title">
+                        <h2 class="mb-0 text-break mx-auto">
+                            <span t-field="payslip.net_wage"/>
+                        </h2>
+
+                    </t>
+
+                    <t t-set="entries">
+                        <div class="d-flex flex-column gap-4 mt-3">
+                            <div class="d-flex flex-column gap-2">
+                                <div class="o_download_pdf d-flex flex-lg-column flex-xl-row flex-wrap gap-2">
+                                    <a class="btn btn-light o_download_btn flex-grow-1"
+                                       t-att-href="payslip.get_portal_url(report_type='pdf', download=True)"
+                                       title="Download" role="button">
+                                        <i class="fa fa-download"/>
+                                        Download
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    </t>
+                </t>
+                <!-- Page Content -->
+                <div id="invoice_content" class="o_portal_content col-12 col-lg-8 col-xxl-9">
+                    <t t-if="error or warning" t-call="employee_portal.portal_payslip_error"/>
+                    <t t-if="success and (not error and not warning)" t-call="employee_portal.portal_payslip_success"/>
+                    <!--                    overflow-y overflow-auto-->
+                    <div class="o_portal_html_view position-relative bg-white shadow overflow-hidden"
+                         style=" flex-grow: 1;display:flex; flex-direction:column;">
+                        <div class="o_portal_html_loader text-center">
+                            <i class="fa fa-circle-o-notch fa-spin fa-2x fa-fw text-black-50"></i>
+                        </div>
+                        <iframe id="invoice_html" class="position-relative d-block" width="100%" height="100%"
+                                frameborder="0" scrolling="no" t-att-src="payslip.get_portal_url(report_type='html')"/>
+                    </div>
+                    <!--                     chatter -->
+                    <div id="invoice_communication" class="mt-4">
+                        <h3>Communication history</h3>
+                        <t t-call="portal.message_thread"/>
+                    </div>
+                </div>
+            </div>
+
+        </xpath>
+    </template>
+
+    <template id="portal_payslip_error" name="Payslip error/warning display">
+        <div class="row mr16">
+            <div t-attf-class="'col-lg-12 mr16 ml16 alert alert-dismissable' #{'alert-danger' if error else 'alert-warning'}"
+                 role="alert">
+                <a href="#" class="close" data-bs-dismiss="alert" aria-label="close" title="close">×</a>
+                <t t-if="error == 'generic'" name="generic">
+                    There was an error processing this page.
+                </t>
+            </div>
+        </div>
+    </template>
+    <template id="portal_payslip_success" name="Payslip success display">
+        <div class="row mr16">
+            <div class="col-lg-12 mr16 ml16 alert alert-dismissable alert-success" role="status">
+                <a href="#" class="close" data-bs-dismiss="alert" aria-label="close" title="close">×</a>
+            </div>
+        </div>
+    </template>
+
+
+</odoo>
