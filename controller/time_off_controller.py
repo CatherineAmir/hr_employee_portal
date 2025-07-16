@@ -81,6 +81,36 @@ class EmployeeTimeOffPortal(CustomerPortal):
             page=page,
             step=self._items_per_page,
         )
+        allocations=request.env['hr.leave.allocation'].sudo().read_group(fields=['employee_id','number_of_days:sum','holiday_status_id'],domain=[('employee_id', '=', employee_id.id)],groupby=['holiday_status_id'])
+        print("allocations", allocations)
+        time_offs_taken=request.env['hr.leave'].sudo().read_group(fields=['employee_id','holiday_status_id','number_of_days:sum'],domain=[('employee_id', '=', employee_id.id),('state','=','validate')],groupby=['holiday_status_id'])
+        print("time_offs_taken", time_offs_taken)
+        allocation_dict={}
+        for allocation in allocations:
+            allocation_dict[allocation['holiday_status_id'][1]]={
+                'allocated_days':allocation['number_of_days'],
+                 'consumed_days':0,
+                 'remaining_days': allocation['number_of_days'],
+                 'img':request.env['hr.leave.type'].sudo().browse(allocation['holiday_status_id'][0]).icon_id.url
+            }
+
+
+        for time_off in time_offs_taken:
+            index = time_off['holiday_status_id'][1]
+            if index in allocation_dict.keys():
+
+                allocation_dict[index]['consumed_days']=time_off['number_of_days']
+                allocation_dict[index]['remaining_days']=allocation_dict[index]['allocated_days']-allocation_dict[index]['consumed_days']
+
+            else:
+                allocation_dict[index]={
+                    'allocated_days':0,
+                    'consumed_days':time_off['number_of_days'],
+
+                    'remaining_days':0,
+                    'img': request.env['hr.leave.type'].sudo().browse(time_off['holiday_status_id'][0]).icon_id.url
+
+                }
 
         values.update({
 
@@ -94,9 +124,11 @@ class EmployeeTimeOffPortal(CustomerPortal):
             'sortby': sortby,
             'searchbar_filters': OrderedDict(sorted(searchbar_filters.items())),
             'filterby': filterby,
-
+            # 'allocations': allocations,
+            # 'time_offs_taken':time_offs_taken
+            'allocation_dict': allocation_dict,
         })
-        print("values first", values)
+        # print("values first", values)
         return values
 
     @http.route(['/my/timeoffs/delete/<int:id>'], type='http', auth="user", website=True)
