@@ -18,7 +18,7 @@ class EmployeeTimeOffPortal(CustomerPortal):
     def _prepare_home_portal_values(self, counters):
         values = super(EmployeeTimeOffPortal, self)._prepare_home_portal_values(counters)
         user_id = request.env.user
-        print("counters", counters)
+
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
 
         if 'payoff_count' in counters:
@@ -26,7 +26,7 @@ class EmployeeTimeOffPortal(CustomerPortal):
                 [('employee_id', '=', employee_id.id)], limit=1)
 
             values['payoff_count'] = payoff_count
-        print("values", values)
+
         return values
 
     def _get_time_off_domain(self):
@@ -81,34 +81,51 @@ class EmployeeTimeOffPortal(CustomerPortal):
             page=page,
             step=self._items_per_page,
         )
-        allocations=request.env['hr.leave.allocation'].sudo().read_group(fields=['employee_id','number_of_days:sum','holiday_status_id'],domain=[('employee_id', '=', employee_id.id)],groupby=['holiday_status_id'])
-        print("allocations", allocations)
-        time_offs_taken=request.env['hr.leave'].sudo().read_group(fields=['employee_id','holiday_status_id','number_of_days:sum'],domain=[('employee_id', '=', employee_id.id),('state','=','validate')],groupby=['holiday_status_id'])
-        print("time_offs_taken", time_offs_taken)
-        allocation_dict={}
-        for allocation in allocations:
-            allocation_dict[allocation['holiday_status_id'][1]]={
-                'allocated_days':allocation['number_of_days'],
-                 'consumed_days':0,
-                 'remaining_days': allocation['number_of_days'],
-                 'img':request.env['hr.leave.type'].sudo().browse(allocation['holiday_status_id'][0]).icon_id.url
-            }
+        allocations = request.env['hr.leave.allocation'].sudo().read_group(
+            fields=['employee_id', 'number_of_days:sum', 'holiday_status_id'],
+            domain=[('employee_id', '=', employee_id.id), ('state', '=', 'validate')], groupby=['holiday_status_id'])
 
+        time_offs_taken = request.env['hr.leave'].sudo().read_group(
+            fields=['employee_id', 'holiday_status_id', 'number_of_days:sum',
+                    'number_of_hours:sum'],
+            domain=[('employee_id', '=', employee_id.id), ('state', '=', 'validate')], groupby=['holiday_status_id'])
+
+        allocation_dict = {}
+        for allocation in allocations:
+            allocation_dict[allocation['holiday_status_id'][1]] = {
+                'allocated_days': allocation['number_of_days'],
+                'consumed_days': 0,
+                'consumed_hours': 0,
+                'remaining_days': allocation['number_of_days'],
+                'img': request.env['hr.leave.type'].sudo().browse(allocation['holiday_status_id'][0]).icon_id.url,
+                'request_unit': "day",
+            }
 
         for time_off in time_offs_taken:
             index = time_off['holiday_status_id'][1]
+
             if index in allocation_dict.keys():
 
-                allocation_dict[index]['consumed_days']=time_off['number_of_days']
-                allocation_dict[index]['remaining_days']=allocation_dict[index]['allocated_days']-allocation_dict[index]['consumed_days']
 
+                allocation_dict[index]['consumed_days'] = time_off['number_of_days']
+                allocation_dict[index]['consumed_hours'] = time_off['number_of_hours']
+
+                allocation_dict[index]['remaining_days'] = allocation_dict[index]['allocated_days'] - \
+                                                           allocation_dict[index]['consumed_days']
+
+                allocation_dict[index]['request_unit'] = request.env['hr.leave.type'].sudo().browse(
+                    time_off['holiday_status_id'][0]).request_unit
             else:
-                allocation_dict[index]={
-                    'allocated_days':0,
-                    'consumed_days':time_off['number_of_days'],
 
-                    'remaining_days':0,
-                    'img': request.env['hr.leave.type'].sudo().browse(time_off['holiday_status_id'][0]).icon_id.url
+                allocation_dict[index] = {
+                    'allocated_days': 0,
+                    'consumed_days': time_off['number_of_days'],
+                    'consumed_hours': time_off['number_of_hours'],
+
+                    'remaining_days': 0,
+                    'img': request.env['hr.leave.type'].sudo().browse(time_off['holiday_status_id'][0]).icon_id.url,
+                    'request_unit': request.env['hr.leave.type'].sudo().browse(
+                        time_off['holiday_status_id'][0]).request_unit,
 
                 }
 
@@ -124,11 +141,10 @@ class EmployeeTimeOffPortal(CustomerPortal):
             'sortby': sortby,
             'searchbar_filters': OrderedDict(sorted(searchbar_filters.items())),
             'filterby': filterby,
-            # 'allocations': allocations,
-            # 'time_offs_taken':time_offs_taken
+
             'allocation_dict': allocation_dict,
         })
-        # print("values first", values)
+
         return values
 
     @http.route(['/my/timeoffs/delete/<int:id>'], type='http', auth="user", website=True)
@@ -161,6 +177,28 @@ class EmployeeTimeOffPortal(CustomerPortal):
             'employee_id': employee_id.id,
         }
         employee_company_id = employee_id.company_id
+        contract_id = employee_id.contract_id
+        schedule_id=False
+        if contract_id:
+            schedule_id = contract_id.resource_calendar_id
+        start_hour = 0
+        end_hour = 0
+        if schedule_id:
+            work_from = list(sorted(set(schedule_id.attendance_ids.mapped('hour_from'))))
+            work_to = list(sorted(set(schedule_id.attendance_ids.mapped('hour_to')), reverse=True))
+            start_hour = work_from[0]
+            end_hour = work_to[0]
+            hours = int(start_hour)
+            minutes = int(round((start_hour - hours) * 60))
+
+            # Format as HH:MM string
+            start_hour = f"{hours:02d}:{minutes:02d}"
+
+            hours = int(end_hour)
+            minutes = int(round((end_hour - hours) * 60))
+
+            # Format as HH:MM string
+            end_hour = f"{hours:02d}:{minutes:02d}"
 
         domain = [
             ('company_id', 'in', [employee_company_id.id, False]),
@@ -174,25 +212,72 @@ class EmployeeTimeOffPortal(CustomerPortal):
             'leave_types': leave_type,
             'page_name': 'create_timeoff_request',
 
+            'start_hour': str(start_hour).replace('.', ':') if start_hour else start_hour,
+            'end_hour': str(end_hour).replace('.', ':') if end_hour else end_hour,
         }
+
 
         return request.render("employee_portal.portal_my_time_offs_create", values)
 
-    @http.route(['/my/timeoffs/create/request'], type='http', auth="user", website=True, methods=['POST'], csrf=False)
+    @http.route(['/my/timeoffs/create/request'], type='http', auth="user", website=True, methods=['POST'],
+                csrf=False)
     def create_timeoff_request(self, **kw):
-        print("kw", kw)
+
         user_id = request.env.user
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
+        time_from = float(kw.get('request_time_from', '').replace(':', '.')) if kw.get(
+            'request_time_from',
+            '') != '' else False
+        if time_from:
+            time_from_hour = int(time_from) if time_from else False
+            time_from_min = round((time_from_hour - time_from) * 100 / 60,2)
+            time_from_correct = time_from_hour + time_from_min
+        else:
+            time_from_correct = 0.0
 
-        request_id = request_id = request.env['hr.leave'].sudo().with_context({
-            'employee_id': employee_id.id,
-        }).create({
+        time_to = float(kw.get('request_time_to', '').replace(':', '.')) if kw.get(
+            'request_time_to',
+            '') != '' else False
+
+
+        if time_to:
+            time_to_hour = int(time_to) if time_to else False
+
+            time_to_min = round((time_to_hour - time_to) * 100 / 60,2)
+
+            time_to_correct = time_to_hour + time_to_min
+
+        else:
+            time_to_correct = 0.0
+
+        vals = {
             "employee_id": employee_id.id,
             'request_date_from': kw['request_date_from'],
-            'request_date_to': kw['request_date_to'],
+
             'holiday_status_id': int(kw['holiday_status_id']),
             'name': kw['description'],
-        })
+            'request_unit_half': True if kw.get('half_day', False) == 'on' else False,
+            'request_unit_hours': True if kw.get('certain_time', False) == 'on' else False,
+            'request_hour_from': time_from_correct,
+            'request_hour_to': time_to_correct,
+            'request_date_from_period': 'am' if kw.get('morning', False) == 'on' else 'pm' if kw.get('afternoon',
+                                                                                                     False) == 'on' else False,
+        }
+        if  kw.get('request_date_to', False):
+            vals.update({
+                'request_date_to': kw.get('request_date_to', False) if kw.get('request_date_to',
+                                                                              False) != '' else False,
+            })
+
+
+
+        request_id = request.env['hr.leave'].sudo().with_context({
+            'employee_id': employee_id.id,
+
+        }).create(vals)
+
+        request_id._compute_duration()
+        request_id._compute_duration_display()
 
         file = kw.get('document_attachment', False)
         if file:

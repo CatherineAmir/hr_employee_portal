@@ -87,6 +87,7 @@
                             <th name="leave_time">Leave Type</th>
                             <th name="start_date">Start Date</th>
                             <th name="end_date">End Date</th>
+                            <th name="end_date">Duration</th>
                             <th name="status">Status</th>
                             <th name="actions">Actions</th>
 
@@ -107,6 +108,9 @@
                                 </td>
                                 <td>
                                     <span t-field="timeoff.request_date_to"/>
+                                </td>
+                                <td>
+                                    <span t-field="timeoff.duration_display" />
                                 </td>
 
                                 <td>
@@ -221,9 +225,16 @@
 
                                 </div>
                                 <div class="card-text text-center">
+                                    <t t-if="allocation_dict[allocation]['request_unit']=='day'">
                                     <span class="text-info fw-100">Take off Days :
                                         <t t-esc="allocation_dict[allocation]['consumed_days']"/>
                                     </span>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="text-info fw-100">Take off Hours :
+                                        <t t-esc="allocation_dict[allocation]['consumed_hours']"/>
+                                    </span>
+                                    </t>
                                 </div>
                                 <div class="card-text text-center">
                                     <span class="text-info fw-100">Remaining Days :
@@ -288,45 +299,70 @@
                                     Date From is required.
                                 </div>
                                 <div id="date_to_div" class="d-block">
-                                <label for="request_date_to" class="m-2">End Date</label>
-                                <input type="date" class="form-control" name="request_date_to"
-                                       t-att-min="str(datetime.datetime.today().date())"
-                                       id="request_date_to"/>
-                                <div class="invalid-feedback">
-                                    Date To is required.
-                                </div>
+                                    <label for="request_date_to" class="m-2">End Date</label>
+                                    <input type="date" class="form-control" name="request_date_to"
+                                           t-att-min="str(datetime.datetime.today().date())"
+                                           id="request_date_to"/>
+                                    <div class="invalid-feedback">
+                                        Date To is required.
+                                    </div>
                                 </div>
                                 <div class="form-check mt-3 mb-2 mx-2 d-none" id="half_day_div">
-                                    <input class="form-check-input" type="checkbox" id="half_day" name="half_day" onchange="onChangeHalfDay(this)"/>
+                                    <input class="form-check-input" type="checkbox" id="half_day" name="half_day"
+                                           onchange="onChangeHalfDay(this)"/>
                                     <label class="form-check-label" for="half_day">
                                         Half Day
                                     </label>
                                 </div>
 
-                                <div class="form-check mt-3 mb-2 mx-2 d-none" id="certain_time_div">
-                                    <input class="form-check-input" type="checkbox" id="custom_hours" name="certain_time"  onchange="onChangeCustomHour(this)"/>
-                                    <label class="form-check-label" for="custom_hours">
-                                       Custom Hours
-                                    </label>
-                                </div>
-<!--TODO ADD INPUT TIME-->
                                 <div id="custom_period_div" class="d-none">
 
-                                <div class="form-check mx-4">
-                                    <input class="form-check-input" type="radio" name="half_day" id="morning"/>
-                                    <label class="form-check-label" for="morning">
-                                        Morning
-                                    </label>
-                                </div>
-                                <div class="form-check mx-4">
-                                    <input class="form-check-input" type="radio" name="half_day" id="afternoon"
-                                           />
-                                    <label class="form-check-label" for="afternoon">
-                                        Afternoon
-                                    </label>
-                                </div>
+                                    <div class="form-check mx-4">
+                                        <input class="form-check-input" type="checkbox" name="morning" id="morning" onchange="onchangeMorning(this)"/>
+                                        <label class="form-check-label" for="morning">
+                                            Morning
+                                        </label>
+                                    </div>
+                                    <div class="form-check mx-4">
+                                        <input class="form-check-input" type="checkbox" name="afternoon" id="afternoon" onchange="onchangeAfternoon(this)"
+                                               />
+
+                                        <label class="form-check-label" for="afternoon">
+                                            Afternoon
+                                        </label>
+                                    </div>
                                 </div>
 
+                                <div class="form-check mt-3 mb-2 mx-2 d-none" id="certain_time_div">
+                                    <input class="form-check-input" type="checkbox" id="custom_hours"
+                                           name="certain_time" onchange="onChangeCustomHour(this)"/>
+                                    <label class="form-check-label" for="custom_hours">
+                                        Custom Hours
+                                    </label>
+                                </div>
+                                <!--TODO ADD INPUT TIME-->
+                                <div class="row d-none" id="custom_hours_div">
+                                    <div class="col">
+                                        <label for="request_time_from" class="m-2">Start Time</label>
+                                    <input type="time" class="form-control" name="request_time_from"
+                                           id="request_time_from" t-att-min="start_hour" t-att-max="end_hour"/>
+                                    <div class="invalid-feedback">
+                                        Time From must be Within Your Working Schedule From
+                                   <t t-esc="start_hour"/> To <t t-esc="end_hour"/>
+                                    </div>
+                                    </div>
+                                    <div class="col">
+                                        <label for="request_time_to" class="m-2">End Time</label>
+                                    <input type="time" class="form-control" name="request_time_to" t-att-min="start_hour" t-att-max="end_hour"
+                                           id="request_time_to"/>
+                                    <div class="invalid-feedback">
+                                        Time To must be Within Your Working Schedule From
+                                   <t t-esc="start_hour"/> To <t t-esc="end_hour"/>
+                                </div>
+                                    </div>
+
+
+                                </div>
 
                                 <label for="description" class="m-2">Description</label>
                                 <input type="text" class="form-control" name="description"

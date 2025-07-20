@@ -132,6 +132,7 @@ function onChangeHalfDay(halfDayCheckbox) {
     console.log("Half day checkbox changed:", halfDayCheckbox.checked);
     if (halfDayCheckbox.checked) {
         customHoursInput.checked=false;
+        customHoursInput.value=false
         custom_period_div.classList.remove('d-none');
         custom_period_div.classList.add('d-block');
         date_to_div.classList.add('d-none');
@@ -152,19 +153,49 @@ function onChangeCustomHour(customHourCheckBox){
     const halfDayInput=document.getElementById('half_day')
     const custom_period_div = document.getElementById('custom_period_div');
     const date_to_div = document.getElementById('date_to_div');
-
+    const custom_hours_div= document.getElementById('custom_hours_div');
 
 
     if (customHourCheckBox.checked)
     {
         halfDayInput.checked=false;
+        halfDayInput.value=false;
         date_to_div.classList.add('d-none');
         date_to_div.classList.remove('d-block');
         custom_period_div.classList.add('d-none');
         custom_period_div.classList.remove('d-block')
+        custom_hours_div.classList.remove('d-none');
+        custom_hours_div.classList.add('d-flex');
+
     }
     else{
         date_to_div.classList.add('d-block');
         date_to_div.classList.remove('d-none');
+        custom_hours_div.classList.remove('d-flex');
+        custom_hours_div.classList.add('d-none');
+
+
     }
 }
+
+
+
+function onchangeMorning(Morning) {
+    if (Morning.checked) {
+        const afternoon = document.getElementById('afternoon');
+        afternoon.checked = false;
+        afternoon.value = false;
+        Morning.value = true;
+    }
+
+}
+
+function onchangeAfternoon(afternoon) {
+    if (afternoon.checked) {
+        const morning = document.getElementById('morning');
+        morning.checked = false;
+        morning.value = false;
+        afternoon.value = true;
+    }
+}
+
