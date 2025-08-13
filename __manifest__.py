@@ -19,6 +19,7 @@
         'templates/employee_portal_payslip.xml',
         'templates/time_off_portal.xml',
         'views/hr_leave.xml',
+        'views/hr_leave_type.xml',
     ],
     "assets":{
         'web.assets_frontend': [

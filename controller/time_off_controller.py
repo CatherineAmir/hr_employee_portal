@@ -10,13 +10,13 @@ import pybase64
 
 
 class EmployeeTimeOffPortal(CustomerPortal):
-    def _prepare_portal_layout_values(self):
-        values = super(EmployeeTimeOffPortal, self)._prepare_portal_layout_values()
-
-        return values
+    # def _prepare_portal_layout_values(self):
+    #     values = super(EmployeeTimeOffPortal, self)._prepare_portal_layout_values()
+    #     print("values", values)
+    #     return values
 
     def _prepare_home_portal_values(self, counters):
-        values = super(EmployeeTimeOffPortal, self)._prepare_home_portal_values(counters)
+        values = super()._prepare_home_portal_values(counters)
         user_id = request.env.user
 
         employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
@@ -26,7 +26,15 @@ class EmployeeTimeOffPortal(CustomerPortal):
                 [('employee_id', '=', employee_id.id)], limit=1)
 
             values['payoff_count'] = payoff_count
+        if "approval_count" in counters:
+            employee_ids=request.env['hr.employee'].sudo().search([('time_off_approver', '=', user_id.id)])
 
+            if len(employee_ids) > 0:
+                approval_count = request.env['hr.leave'].search_count([('employee_id', 'in', employee_ids.ids)], limit=1)
+            else:
+                approval_count = 0
+
+            values['approval_count'] = approval_count
         return values
 
     def _get_time_off_domain(self):
@@ -71,7 +79,7 @@ class EmployeeTimeOffPortal(CustomerPortal):
         }
         # default filter by value
         if not filterby:
-            filterby = 'all'
+            filterby = 'to_approve'
         domain += searchbar_filters[filterby]['domain']
 
         pager = portal_pager(  # vals to define the pager.
@@ -89,16 +97,19 @@ class EmployeeTimeOffPortal(CustomerPortal):
             fields=['employee_id', 'holiday_status_id', 'number_of_days:sum',
                     'number_of_hours:sum'],
             domain=[('employee_id', '=', employee_id.id), ('state', '=', 'validate')], groupby=['holiday_status_id'])
-
+        print("allocations",allocations)
         allocation_dict = {}
         for allocation in allocations:
+            leave_type_record=request.env['hr.leave.type'].sudo().browse(allocation['holiday_status_id'][0])
+            hide_allocation=leave_type_record.hide_allocation_from_user
             allocation_dict[allocation['holiday_status_id'][1]] = {
-                'allocated_days': allocation['number_of_days'],
+                'allocated_days': allocation['number_of_days'] if not hide_allocation else 0,
                 'consumed_days': 0,
                 'consumed_hours': 0,
-                'remaining_days': allocation['number_of_days'],
+                'remaining_days': allocation['number_of_days'] if not hide_allocation else 0,
                 'img': request.env['hr.leave.type'].sudo().browse(allocation['holiday_status_id'][0]).icon_id.url,
                 'request_unit': "day",
+                'hide_allocation': hide_allocation,
             }
 
         for time_off in time_offs_taken:
@@ -126,6 +137,7 @@ class EmployeeTimeOffPortal(CustomerPortal):
                     'img': request.env['hr.leave.type'].sudo().browse(time_off['holiday_status_id'][0]).icon_id.url,
                     'request_unit': request.env['hr.leave.type'].sudo().browse(
                         time_off['holiday_status_id'][0]).request_unit,
+                    'hide_allocation': True,
 
                 }
 
@@ -268,7 +280,8 @@ class EmployeeTimeOffPortal(CustomerPortal):
                 'request_date_to': kw.get('request_date_to', False) if kw.get('request_date_to',
                                                                               False) != '' else False,
             })
-
+        else:
+            vals.update({'request_date_to':kw['request_date_from']})
 
 
         request_id = request.env['hr.leave'].sudo().with_context({
@@ -294,3 +307,100 @@ class EmployeeTimeOffPortal(CustomerPortal):
             })
 
         return redirect('/my/timeoffs')
+
+    @http.route(['/my/approvals', '/my/approvals/page/<int:page>'], type='http', auth="user", website=True)
+    def portal_approvals(self, page=1, sortby=None, filterby=None, **kw):
+        values = self._prepare_my_approvals_values(page, sortby, filterby)
+
+        request.session['approvals_history'] = values['approvals'].ids[:100]
+
+
+        return request.render("employee_portal.portal_my_approvals", values)
+
+    def _prepare_my_approvals_values(self, page, sortby, filterby, domain=None,
+                                    url="/my/approvals"):
+
+        values = {}
+        Leave = request.env['hr.leave']
+        user_id = request.env.user
+        employee_ids = request.env['hr.employee'].sudo().search([('time_off_approver', '=', user_id.id)])
+
+
+        domain = expression.AND([domain or [], [('employee_id', 'in',  employee_ids.ids)]])
+        searchbar_sortings = {
+            'date': {'label': _('Date'), 'order': 'request_date_from desc'},
+            'last_update': {'label': _('Last Update'), 'order': 'write_date desc'},
+        }
+        # default sort by order
+        if not sortby:
+            sortby = 'last_update'
+        order = searchbar_sortings[sortby]['order']
+
+        searchbar_filters = {
+            'all': {'label': _('All'), 'domain': []},
+            'to_approve': {'label': _('To Approve'), 'domain': [("state", 'in', ['confirm',])]},
+            'refuse': {'label': _('Refuse'), 'domain': [("state", '=', 'refuse')]},
+            'second_approval':{'label':_('Second Approval'), 'domain': [("state", '=', 'validate1')]},
+            'approved': {'label': _('Approved'), 'domain': [("state", '=', 'validate')]},
+            'cancellation_request': {'label': _('Cancellation Request'),
+                                     'domain': [("state", '=', 'cancellation_request')]},
+            'cancel': {'label': _('Cancelled'), 'domain': [("state", '=', 'cancel')]},
+
+        }
+        # default filter by value
+        if not filterby:
+            filterby = 'all'
+        domain += searchbar_filters[filterby]['domain']
+
+        pager = portal_pager(  # vals to define the pager.
+            url=url,
+            url_args={'sortby': sortby, 'filterby': filterby},
+            total=Leave.search_count(domain) if Leave.has_access('read') else 0,
+            page=page,
+            step=self._items_per_page,
+        )
+
+
+        values.update({
+
+            'approvals': Leave.sudo().search(
+                domain, order=order, limit=self._items_per_page, offset=pager['offset']),
+
+            'page_name': 'approvals',
+            'pager': pager,
+            'default_url': url,
+            'searchbar_sortings': searchbar_sortings,
+            'sortby': sortby,
+            'searchbar_filters': OrderedDict(sorted(searchbar_filters.items())),
+            'filterby': filterby,
+
+
+        })
+
+        return values
+
+    @http.route(['/my/approvals/approve/<int:id>'], type='http', auth="user", website=True)
+    def approve_approvals(self, id=0, **kw):
+        user_id = request.env.user
+        employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
+        leave_id = request.env["hr.leave"].browse(id)
+
+        if leave_id:
+            leave_id.sudo().write({
+                'state': 'validate1'
+            })
+
+        return redirect('/my/approvals')
+
+
+    @http.route(['/my/approvals/refuse/<int:id>'], type='http', auth="user", website=True)
+    def refuse_approvals(self, id=0, **kw):
+        user_id = request.env.user
+        employee_id = request.env['hr.employee'].sudo().search([('user_id', '=', user_id.id)])
+        leave_id = request.env["hr.leave"].browse(id)
+        if leave_id:
+            leave_id.sudo().write({
+                'state': 'refuse'
+            })
+
+        return redirect('/my/approvals')

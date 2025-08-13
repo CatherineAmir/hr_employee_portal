@@ -17,6 +17,11 @@
 
                     Create Time Off Request
                 </li>
+
+                <li t-if="page_name == 'approvals'"
+                    t-attf-class="breadcrumb-item #{'active ' if not approval else ''}">
+                     Approvals
+                </li>
             </xpath>
         </template>
 
@@ -44,6 +49,26 @@
                 </t>
 
             </div>
+
+            <div id="portal_service_category" position="inside">
+
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon"
+                       style="max-height:50px; max-weight:50px;"
+                       t-value="'/employee_portal/static/src/img/Timeoff.svg'"/>
+
+
+                    <t t-set="title">My Team time Off</t>
+                    <t t-set="url" t-value="'/my/approvals'"/>
+
+                    <t t-set="text">View and Manage Your team time offs</t>
+                    <t t-set="placeholder_count" t-value="'approval_count'"/>
+
+                </t>
+
+            </div>
+
+
         </template>
 
 
@@ -110,7 +135,7 @@
                                     <span t-field="timeoff.request_date_to"/>
                                 </td>
                                 <td>
-                                    <span t-field="timeoff.duration_display" />
+                                    <span t-field="timeoff.duration_display"/>
                                 </td>
 
                                 <td>
@@ -220,25 +245,42 @@
                                 <div class="card-text text-center">
 
                                     <span class="text-info">Allocated Days :
-                                        <t t-esc="allocation_dict[allocation]['allocated_days']"/>
+                                        <t t-if="allocation_dict[allocation]['hide_allocation']">
+                                            0
+                                        </t>
+                                        <t t-else="">
+
+
+                                            <t t-esc="allocation_dict[allocation]['allocated_days']"/>
+                                        </t>
+
                                     </span>
 
                                 </div>
                                 <div class="card-text text-center">
                                     <t t-if="allocation_dict[allocation]['request_unit']=='day'">
-                                    <span class="text-info fw-100">Take off Days :
-                                        <t t-esc="allocation_dict[allocation]['consumed_days']"/>
-                                    </span>
+                                        <span class="text-info fw-100">Take off Days :
+                                            <t t-esc="allocation_dict[allocation]['consumed_days']"/>
+                                        </span>
                                     </t>
                                     <t t-else="">
                                         <span class="text-info fw-100">Take off Hours :
-                                        <t t-esc="allocation_dict[allocation]['consumed_hours']"/>
-                                    </span>
+                                            <t t-esc="allocation_dict[allocation]['consumed_hours']"/>
+                                        </span>
                                     </t>
                                 </div>
+
                                 <div class="card-text text-center">
+
                                     <span class="text-info fw-100">Remaining Days :
-                                        <t t-esc="allocation_dict[allocation]['remaining_days']"/>
+                                        <t t-if="allocation_dict[allocation]['hide_allocation']">
+                                            0
+                                        </t>
+                                        <t t-else="">
+
+
+                                            <t t-esc="allocation_dict[allocation]['remaining_days']"/>
+                                        </t>
                                     </span>
 
 
@@ -279,12 +321,16 @@
                                 <select class="form-select" name="holiday_status_id" id="holiday_status_id" required="1"
                                         onchange="on_change_leave_type(this)">
 
-                                    <option value=""></option>
+                                    <option value="" t-att-data-request_unit="day" t-att-data-document="False"> </option>
                                     <t t-foreach="leave_types" t-as="leave">
                                         <option t-att-value="leave.id" t-att-data-document="leave.support_document"
                                                 t-att-data-request_unit="leave.request_unit">
-
-                                            <t t-esc="leave.display_name"/>
+                                            <t t-if="leave.hide_allocation_from_user">
+                                                <t t-esc="leave.name"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="leave.display_name"/>
+                                            </t>
 
 
                                         </option>
@@ -318,14 +364,16 @@
                                 <div id="custom_period_div" class="d-none">
 
                                     <div class="form-check mx-4">
-                                        <input class="form-check-input" type="checkbox" name="morning" id="morning" onchange="onchangeMorning(this)"/>
+                                        <input class="form-check-input" type="checkbox" name="morning" id="morning"
+                                               onchange="onchangeMorning(this)"/>
                                         <label class="form-check-label" for="morning">
                                             Morning
                                         </label>
                                     </div>
                                     <div class="form-check mx-4">
-                                        <input class="form-check-input" type="checkbox" name="afternoon" id="afternoon" onchange="onchangeAfternoon(this)"
-                                               />
+                                        <input class="form-check-input" type="checkbox" name="afternoon" id="afternoon"
+                                               onchange="onchangeAfternoon(this)"
+                                        />
 
                                         <label class="form-check-label" for="afternoon">
                                             Afternoon
@@ -344,21 +392,26 @@
                                 <div class="row d-none" id="custom_hours_div">
                                     <div class="col">
                                         <label for="request_time_from" class="m-2">Start Time</label>
-                                    <input type="time" class="form-control" name="request_time_from"
-                                           id="request_time_from" t-att-min="start_hour" t-att-max="end_hour"/>
-                                    <div class="invalid-feedback">
-                                        Time From must be Within Your Working Schedule From
-                                   <t t-esc="start_hour"/> To <t t-esc="end_hour"/>
-                                    </div>
+                                        <input type="time" class="form-control" name="request_time_from"
+                                               id="request_time_from" t-att-min="start_hour" t-att-max="end_hour"/>
+                                        <div class="invalid-feedback">
+                                            Time From must be Within Your Working Schedule From
+                                            <t t-esc="start_hour"/>
+                                            To
+                                            <t t-esc="end_hour"/>
+                                        </div>
                                     </div>
                                     <div class="col">
                                         <label for="request_time_to" class="m-2">End Time</label>
-                                    <input type="time" class="form-control" name="request_time_to" t-att-min="start_hour" t-att-max="end_hour"
-                                           id="request_time_to"/>
-                                    <div class="invalid-feedback">
-                                        Time To must be Within Your Working Schedule From
-                                   <t t-esc="start_hour"/> To <t t-esc="end_hour"/>
-                                </div>
+                                        <input type="time" class="form-control" name="request_time_to"
+                                               t-att-min="start_hour" t-att-max="end_hour"
+                                               id="request_time_to"/>
+                                        <div class="invalid-feedback">
+                                            Time To must be Within Your Working Schedule From
+                                            <t t-esc="start_hour"/>
+                                            To
+                                            <t t-esc="end_hour"/>
+                                        </div>
                                     </div>
 
 
@@ -386,6 +439,138 @@
 
         </template>
 
+
+        <template id="portal_my_approvals" name="My Approvals Offs">
+
+            <ul class="d-none">
+                <li>
+                    <code>self</code>
+                    (the set of records to compute)
+                </li>
+                <li>
+                    <code>datetime</code>
+                    (Python module)
+                </li>
+                <li>
+                    <code>dateutil</code>
+                    (Python module)
+                </li>
+                <li>
+                    <code>time</code>
+                    (Python module)
+                </li>
+            </ul>
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+                <t t-call="portal.portal_searchbar">
+                    <t t-set="title">My Team Time Off</t>
+                </t>
+                <t t-if="not approvals">
+                    <p class="alert alert-warning">There are currently no timeoffs requests To Approve.</p>
+                </t>
+
+
+                <t t-if="approvals" t-call="portal.portal_table">
+                    <thead>
+                        <tr class="active">
+                            <th name="employee_name">Employee Name</th>
+                            <th name="leave_time">Leave Type</th>
+                            <th name="start_date">Start Date</th>
+                            <th name="end_date">End Date</th>
+                            <th name="duration">Duration</th>
+                            <th name="description">Description</th>
+                            <th name="status">Status</th>
+                            <th name="actions">Actions</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <t t-foreach="approvals" t-as="approval">
+                            <tr>
+                                <td>
+                                    <span t-field="approval.employee_id.name"/>
+
+                                </td>
+
+                                <td>
+                                    <span t-field="approval.holiday_status_id.name"/>
+
+                                </td>
+                                <td>
+                                    <span t-field="approval.request_date_from"/>
+                                </td>
+                                <td>
+                                    <span t-field="approval.request_date_to"/>
+                                </td>
+                                <td>
+                                    <span t-field="approval.duration_display"/>
+                                </td>
+                                <td>
+                                    <span t-field="approval.private_name"/>
+                                </td>
+
+                                <td>
+                                    <t t-if="approval.state == 'refuse'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-danger'"/>
+                                    </t>
+                                    <t t-elif="approval.state == 'validate'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-success'"/>
+                                    </t>
+                                    <t t-elif="approval.state == 'cancel'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-secondary'"/>
+                                    </t>
+                                    <t t-elif="approval.state == 'confirm'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-primary'"/>
+                                    </t>
+                                    <t t-elif="approval.state == 'validate1'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-info'"/>
+                                    </t>
+                                    <t t-elif="approval.state == 'cancellation_request'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-warning'"/>
+                                    </t>
+
+
+                                    <span t-field="approval.state" t-att-class="state_class"/>
+
+                                </td>
+                                <td>
+                                    <!--                                    <t t-set="date_condition"-->
+                                    <!--                                       t-value="approval.request_date_from &gt; datetime.datetime.today().date()"/>-->
+                                    <!--                                    and date_condition"-->
+                                    <t t-if="approval.state == 'confirm'">
+                                        <t t-set="state_class" t-value="'badge rounded-pill bg-success'"/>
+                                        <div>
+                                            <a t-att-href="'/my/approvals/approve/%s' %(approval.id)"
+                                               class="btn btn-outline-success fa fa-check"
+                                               role="button">
+                                                Approve
+                                            </a>
+
+                                              <a t-att-href="'/my/approvals/refuse/%s' %(approval.id)"
+                                               class="btn btn-outline-danger fa fa-check"
+                                               role="button">
+                                                Refuse
+                                            </a>
+
+
+                                        </div>
+                                    </t>
+
+
+                                </td>
+                            </tr>
+
+                        </t>
+                    </tbody>
+                </t>
+
+
+                <!--                <script type="text/javascript" src="/employee_portal/static/src/js/timeoff_request.js"></script>-->
+            </t>
+
+        </template>
 
     </data>
 </odoo>

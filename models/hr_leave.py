@@ -32,7 +32,19 @@ class HrLeave(models.Model):
                 key, "%Y-%m-%d").date():
                 raise UserError(_("You Can't ask Time off on Mandatory Days %s", list(mandatory_days.keys())))
         return True
+    def _check_double_validation_rules(self, employees, state):
+        if self.env.user.has_group('hr_holidays.group_hr_holidays_manager'):
+            return
 
+        is_leave_user = self.env.user.has_group('hr_holidays.group_hr_holidays_user')
+        if state == 'validate1':
+            employees = employees.filtered(lambda employee: employee.leave_manager_id  != self.env.user and employee.time_off_approver != self.env.user)
+            print("employees.filtered", employees)
+            if employees:
+                raise AccessError(_('You cannot first approve a time off for %s, because you are not his time off manager', employees[0].name))
+        elif state == 'validate' and not is_leave_user:
+            # Is probably handled via ir.rule
+            raise AccessError(_('You don\'t have the rights to apply second approval on a time off request'))
     @api.depends_context('uid')
     @api.depends('state', 'employee_id')
     def _compute_can_cancel(self):

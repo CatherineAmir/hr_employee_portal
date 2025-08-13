@@ -6,6 +6,19 @@ class HrEmployee(models.Model):
     """ This model represents hr.employee."""
     _inherit = "hr.employee"
 
+    time_off_approver=fields.Many2one('res.users', string="Time of Approver (Manager)")
+    leave_manager_id=fields.Many2one('res.users', string="Leave Manager",compute='_compute_leave_manager',store=True)
+
+    @api.depends('time_off_approver')
+    def _compute_leave_manager(self):
+        for employee in self:
+            if not employee.time_off_approver._is_portal():
+                employee.leave_manager_id = employee.time_off_approver.id
+            else:
+                employee.leave_manager_id=False
+
+
+
     def create_user_portal(self):
         for employee in self:
             if not employee.user_id and employee.work_email:
@@ -18,4 +31,4 @@ class HrEmployee(models.Model):
                 })
                 employee.user_id = user
                 employee.work_email = user.login
-                user.action_reset_password()
+                user.with_context(create_user=1).action_reset_password()

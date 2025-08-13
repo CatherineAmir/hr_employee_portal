@@ -10,9 +10,31 @@
             <xpath expr="//page[@name='hr_settings']//field[@name='user_id']" position="attributes">
                 <attribute name="domain">[('company_ids', 'in', company_id)]</attribute>
             </xpath>
+
+
             <xpath expr="//button[@name='action_create_user']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+
+            <!-- Add a new page to the notebook -->
+
+        </field>
+    </record>
+
+    <record id="hr_employee_view_form_leave_inherit_3" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_holidays.view_employee_form_leave_inherit"/>
+        <field name="arch" type="xml">
+            <!-- Add fields to an existing group -->
+                <xpath expr="//field[@name='leave_manager_id']" position="attributes">
+
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            <xpath expr="//field[@name='leave_manager_id']" position="before">
+            <field name="time_off_approver"/>
+            </xpath>
+
 
             <!-- Add a new page to the notebook -->
 
