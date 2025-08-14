@@ -49,9 +49,9 @@ function on_change_leave_type(selectedLeaveType) {
     if (request_unit === "" || request_unit === null || request_unit === undefined) {
         console.log("request_unit is empty or null or undefined");
         customHoursInput.checked = false;
-        customHoursInput.value = false;
+
         halfDayInput.checked = false;
-        halfDayInput.value = false;
+
         half_day_div.classList.add('d-none');
         half_day_div.classList.remove('d-block');
         certain_time_div.classList.add('d-none');
@@ -62,11 +62,14 @@ function on_change_leave_type(selectedLeaveType) {
         date_to_div.classList.add('d-block');
         custom_hours_div.classList.add('d-none');
         custom_hours_div.classList.remove('d-flex');
-    } else if (request_unit === 'day') {
+    }
+
+    else if (request_unit === 'day') {
+             console.log("in day");
         customHoursInput.checked = false;
-        customHoursInput.value = false;
+
         halfDayInput.checked = false;
-        halfDayInput.value = false;
+
         half_day_div.classList.add('d-none');
         half_day_div.classList.remove('d-block');
         certain_time_div.classList.add('d-none');
@@ -79,19 +82,21 @@ function on_change_leave_type(selectedLeaveType) {
     } else if (request_unit === 'half_day')
         // half day check box will appear
     {
+             console.log("in half day");
         customHoursInput.checked = false;
-        customHoursInput.value = false;
+
         halfDayInput.checked = false;
-        halfDayInput.value = false;
+
         half_day_div.classList.remove('d-none');
         half_day_div.classList.add('d-block');
         certain_time_div.classList.add('d-none');
         certain_time_div.classList.remove('d-block');
     } else if (request_unit === 'hour') {
+             console.log("in elif");
         customHoursInput.checked = false;
-        customHoursInput.value = false;
+
         halfDayInput.checked = false;
-        halfDayInput.value = false;
+
         certain_time_div.classList.add('d-block')
         certain_time_div.classList.remove('d-none')
         //     custom hour check box will appear
@@ -99,10 +104,11 @@ function on_change_leave_type(selectedLeaveType) {
         half_day_div.classList.remove('d-none')
 
     } else {
+        console.log("in else");
         customHoursInput.checked = false;
-        customHoursInput.value = false;
+
         halfDayInput.checked = false;
-        halfDayInput.value = false;
+
         half_day_div.classList.add('d-none');
         half_day_div.classList.remove('d-block');
         certain_time_div.classList.add('d-none');
@@ -114,6 +120,10 @@ function on_change_leave_type(selectedLeaveType) {
         custom_hours_div.classList.add('d-none');
         custom_hours_div.classList.remove('d-flex');
     }
+    console.log("customHoursInput.checked", customHoursInput.checked);
+    console.log("customHoursInput.value", customHoursInput.value);
+    console.log("halfDayInput.checked", halfDayInput.checked);
+    console.log("halfDayInput.value", halfDayInput.value);
 
 
 }
@@ -180,7 +190,7 @@ function onChangeHalfDay(halfDayCheckbox) {
     console.log("Half day checkbox changed:", halfDayCheckbox.checked);
     if (halfDayCheckbox.checked) {
         customHoursInput.checked = false;
-        customHoursInput.value = false
+
         custom_period_div.classList.remove('d-none');
         custom_period_div.classList.add('d-block');
         date_to_div.classList.add('d-none');
@@ -206,7 +216,7 @@ function onChangeCustomHour(customHourCheckBox) {
 
     if (customHourCheckBox.checked) {
         halfDayInput.checked = false;
-        halfDayInput.value = false;
+
         date_to_div.classList.add('d-none');
         date_to_div.classList.remove('d-block');
         custom_period_div.classList.add('d-none');
@@ -229,8 +239,7 @@ function onchangeMorning(Morning) {
     if (Morning.checked) {
         const afternoon = document.getElementById('afternoon');
         afternoon.checked = false;
-        afternoon.value = false;
-        Morning.value = true;
+
     }
 
 }
@@ -239,8 +248,7 @@ function onchangeAfternoon(afternoon) {
     if (afternoon.checked) {
         const morning = document.getElementById('morning');
         morning.checked = false;
-        morning.value = false;
-        afternoon.value = true;
+
     }
 }
 

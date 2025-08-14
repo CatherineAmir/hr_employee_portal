@@ -10,10 +10,7 @@ import pybase64
 
 
 class EmployeeTimeOffPortal(CustomerPortal):
-    # def _prepare_portal_layout_values(self):
-    #     values = super(EmployeeTimeOffPortal, self)._prepare_portal_layout_values()
-    #     print("values", values)
-    #     return values
+
 
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)
@@ -240,9 +237,12 @@ class EmployeeTimeOffPortal(CustomerPortal):
         time_from = float(kw.get('request_time_from', '').replace(':', '.')) if kw.get(
             'request_time_from',
             '') != '' else False
+
         if time_from:
             time_from_hour = int(time_from) if time_from else False
-            time_from_min = round((time_from_hour - time_from) * 100 / 60,2)
+
+            time_from_min = round(( time_from-time_from_hour) *100/ 60,2)
+
             time_from_correct = time_from_hour + time_from_min
         else:
             time_from_correct = 0.0
@@ -255,12 +255,13 @@ class EmployeeTimeOffPortal(CustomerPortal):
         if time_to:
             time_to_hour = int(time_to) if time_to else False
 
-            time_to_min = round((time_to_hour - time_to) * 100 / 60,2)
+            time_to_min = round((time_to - time_to_hour) * 100/60 ,2)
 
             time_to_correct = time_to_hour + time_to_min
 
         else:
             time_to_correct = 0.0
+
 
         vals = {
             "employee_id": employee_id.id,
@@ -268,11 +269,11 @@ class EmployeeTimeOffPortal(CustomerPortal):
 
             'holiday_status_id': int(kw['holiday_status_id']),
             'name': kw['description'],
-            'request_unit_half': True if kw.get('half_day', False) == 'on' else False,
-            'request_unit_hours': True if kw.get('certain_time', False) == 'on' else False,
+            'request_unit_half': True if kw.get('half_day', False) == 'true' else False,
+            'request_unit_hours': True if kw.get('certain_time', False) == 'true' else False,
             'request_hour_from': time_from_correct,
             'request_hour_to': time_to_correct,
-            'request_date_from_period': 'am' if kw.get('morning', False) == 'on' else 'pm' if kw.get('afternoon',
+            'request_date_from_period': 'am' if kw.get('morning', False) == 'true' else 'pm' if kw.get('afternoon',
                                                                                                      False) == 'on' else False,
         }
         if  kw.get('request_date_to', False):
@@ -289,8 +290,8 @@ class EmployeeTimeOffPortal(CustomerPortal):
 
         }).create(vals)
 
-        request_id._compute_duration()
-        request_id._compute_duration_display()
+        # request_id._compute_duration()
+        # request_id._compute_duration_display()
 
         file = kw.get('document_attachment', False)
         if file:

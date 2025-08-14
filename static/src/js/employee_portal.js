@@ -7,6 +7,6 @@ PortalHomeCounters.include({
      * @override
      */
     _getCountersAlwaysDisplayed() {
-        return this._super(...arguments).concat(['payoff_count',"payslip_count","allocation_count","approval_count"]);
+        return this._super(...arguments).concat(['payoff_count',"payslip_count","allocation_count","approval_count","attendance_count"]);
     },
 });

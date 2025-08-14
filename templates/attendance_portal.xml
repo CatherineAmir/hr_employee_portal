@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+         <template id="portal_my_home_attendance" name="Attendance" inherit_id="portal.portal_my_home" customize_show="True"
+              priority="80">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_client_category_enable" t-value="False"/>
+            <t t-set="portal_vendor_category_enable" t-value="False"/>
+        </xpath>
+        <div id="portal_service_category" position="inside">
+
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
+                   style="max-height:50px; max-weight:50px;"/>
+                <t t-set="title">Your Attendance</t>
+                <t t-set="url" t-value="'/my/atttendance'"/>
+                <t t-set="text">Check Your Attendace</t>
+                <t t-set="placeholder_count" t-value="'attendance_count'"/>
+            </t>
+        </div>
+
+
+
+    </template>
+
+
+    </data>
+</odoo>
