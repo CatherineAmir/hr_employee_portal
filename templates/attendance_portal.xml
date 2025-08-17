@@ -1,27 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-         <template id="portal_my_home_attendance" name="Attendance" inherit_id="portal.portal_my_home" customize_show="True"
-              priority="80">
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
-            <t t-set="portal_client_category_enable" t-value="False"/>
-            <t t-set="portal_vendor_category_enable" t-value="False"/>
-        </xpath>
-        <div id="portal_service_category" position="inside">
+         <template id="portal_my_home_menu_attendance" name="Portal layout : attendance menu"
+                  inherit_id="portal.portal_breadcrumbs" priority="80">
+            <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
 
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="icon" t-value="'/employee_portal/static/src/img/Bill.svg'"
-                   style="max-height:50px; max-weight:50px;"/>
-                <t t-set="title">Your Attendance</t>
-                <t t-set="url" t-value="'/my/atttendance'"/>
-                <t t-set="text">Check Your Attendace</t>
-                <t t-set="placeholder_count" t-value="'attendance_count'"/>
+             <li t-if="page_name == 'attendance'" t-attf-class="breadcrumb-item #{'active ' if not timeoff else ''}">
+                    <a t-if="attendance" t-attf-href="/my/attendance?{{ keep_query() }}">Attendance</a>
+                    <t t-else="">Attendance</t>
+                </li>
+            </xpath>
+         </template>
+
+        <template id="portal_my_home_attendance" name="Attendance" inherit_id="portal.portal_my_home"
+                  customize_show="True"
+                  priority="80">
+            <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+                <t t-set="portal_client_category_enable" t-value="False"/>
+                <t t-set="portal_vendor_category_enable" t-value="False"/>
+            </xpath>
+            <div id="portal_service_category" position="inside">
+
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/employee_portal/static/src/img/attendance.svg'"
+
+                       style="max-height:100px; max1-weight:100px;"/>
+                    <t t-set="title">Your Attendance</t>
+                    <t t-set="url" t-value="'/my/attendance'"/>
+                    <t t-set="text">Check Your Attendace</t>
+                    <t t-set="placeholder_count" t-value="'attendance_count'"/>
+                </t>
+            </div>
+
+
+        </template>
+
+
+        <template id="portal_my_attendance" name="My Time Offs">
+
+            <ul class="d-none">
+                <li>
+                    <code>self</code>
+                    (the set of records to compute)
+                </li>
+                <li>
+                    <code>datetime</code>
+                    (Python module)
+                </li>
+                <li>
+                    <code>dateutil</code>
+                    (Python module)
+                </li>
+                <li>
+                    <code>time</code>
+                    (Python module)
+                </li>
+            </ul>
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+              <t t-call="portal.portal_searchbar">
+                    <t t-set="title">My Attendance</t>
+                </t>
+
+                <t t-if="not attendance">
+                    <p class="alert alert-warning">There are currently no attendance.</p>
+                </t>
+
+                <t t-if="attendance" t-call="portal.portal_table">
+
+                    <h3 class="text-center">
+                    <span class="text-primary">Attendance</span>
+                    </h3>
+                    <h5 class="text-center">
+
+
+                        <span class="text-info text-center">From <t t-esc="month_start"/> </span>
+                        <span class="text-info text-center" >To <t t-esc="month_end"/> </span>
+
+
+                    </h5>
+                    <thead>
+                        <tr class="active">
+                            <th class="text-primary" name="day">Day</th>
+                            <th class="text-primary" name="worked_hours">Worked Hours</th>
+                            <th class="text-primary" name="absent">Absent</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <t t-foreach="attendance[0]" t-as="attendance">
+                            <t t-if="attendance['not_calculated_hours'] and attendance['in_mode']=='manual'" >
+                                <t t-set="my_class" t-value="'text-danger'"/>
+                                </t>
+                            <t t-elif="attendance['in_mode']!='manual'">
+                                <t t-set="my_class" t-value="'text-secondary'"/>
+                            </t>
+
+                             <t t-else="">
+                                <t t-set="my_class" t-value="'text-info'"/>
+                            </t>
+
+                            <tr>
+
+
+                                <td>
+
+                                    <span t-att-class="my_class" t-esc="datetime.datetime.strptime(attendance['check_in:day'].strip(), '%d %b %Y').strftime('%A %d %B %Y')"/>
+
+                                </td>
+                                <td>
+
+                                    <span t-att-class="my_class" t-esc="'%d:%02d' % (int(attendance['worked_hours']), int((attendance['worked_hours'] % 1) * 60))"/>
+
+                                </td>
+                                <td>
+                                    <t t-if="attendance['in_mode']=='manual'">
+                                    <span  t-att-class="my_class" t-esc="attendance['not_calculated_hours']"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span t-att-class="my_class">True</span>
+                                    </t>
+                                </td>
+                            </tr>
+
+                        </t>
+                        <tr>
+                            <td>
+                                <strong class="text-primary ">Total Worked Hours:</strong>
+                            </td>
+                            <td>
+                                 <span class="text-info" t-esc="'%d:%02d' % (int(total_hours), int((total_hours % 1) * 60))"/>
+
+                            </td>
+                            <td>
+
+                            </td>
+                        </tr>
+                    </tbody>
+                </t>
             </t>
-        </div>
 
 
-
-    </template>
+        </template>
 
 
     </data>
