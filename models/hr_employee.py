@@ -12,7 +12,7 @@ class HrEmployee(models.Model):
     @api.depends('time_off_approver')
     def _compute_leave_manager(self):
         for employee in self:
-            if not employee.time_off_approver._is_portal():
+            if  employee.time_off_approver and not employee.time_off_approver._is_portal():
                 employee.leave_manager_id = employee.time_off_approver.id
             else:
                 employee.leave_manager_id=False
