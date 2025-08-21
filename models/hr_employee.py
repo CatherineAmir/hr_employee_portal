@@ -23,7 +23,7 @@ class HrEmployee(models.Model):
         for employee in self:
             if not employee.user_id and employee.work_email:
                 portal_group = self.env.ref('base.group_portal')
-                user = self.env['res.users'].create({
+                user = self.env['res.users'].sudo().create({
                     'name': employee.name,
                     'login': employee.work_email,
                     'password':'12345',
@@ -31,4 +31,4 @@ class HrEmployee(models.Model):
                 })
                 employee.user_id = user
                 employee.work_email = user.login
-                user.with_context(create_user=1).action_reset_password()
+                user.with_context(create_user=1).sudo().action_reset_password()
