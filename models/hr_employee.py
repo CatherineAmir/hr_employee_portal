@@ -31,4 +31,12 @@ class HrEmployee(models.Model):
                 })
                 employee.user_id = user
                 employee.work_email = user.login
-                user.with_context(create_user=1).sudo().action_reset_password()
+                user.with_context(create_user=1,).sudo().action_reset_password()
+
+
+
+
+    def reset_portal_password(self):
+        for employee in self:
+            if employee.user_id:
+                employee.user_id.action_reset_password()

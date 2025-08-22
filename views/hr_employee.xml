@@ -70,6 +70,14 @@
         <field name="state">code</field>
         <field name="code">action = records.create_user_portal()</field>
     </record>
+ <record id="action_reset_portal_password" model="ir.actions.server">
+        <field name="name">Reset Password Portal User</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_hr_employee"/>
+        <field name="binding_model_id" ref="model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">action = records.reset_portal_password()</field>
+    </record>
 
 
     <!-- Inherit List View -->
