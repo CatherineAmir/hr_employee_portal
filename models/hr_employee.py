@@ -39,4 +39,4 @@ class HrEmployee(models.Model):
     def reset_portal_password(self):
         for employee in self:
             if employee.user_id:
-                employee.user_id.action_reset_password()
+                employee.user_id.sudo().action_reset_password()
