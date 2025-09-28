@@ -65,6 +65,7 @@ class ModelName(CustomerPortal):
             filterby = 'all'
         domain += searchbar_filters[filterby]['domain']
         all_dates = Attendance.sudo().search(domain).mapped("check_in")
+        print("all_dates", all_dates)
 
         if not all_dates:
             return {"pager": {}, "attendance": []}
@@ -78,10 +79,13 @@ class ModelName(CustomerPortal):
 
             if start not in seen_dates:
                 seen_dates.add((start,end))
-                # period_starts.append((start)
+                period_starts.append(start)
 
-        seen = sorted(seen_dates, key=lambda t: t[0], reverse=True)
+        seen = sorted(set(seen_dates), key=lambda t: t[0], reverse=True)
+        # print("seen",seen)
         total_months = len(seen)
+
+        # print("total_months", total_months)
 
         page = max(1, min(page, total_months))
         month_start = list(seen)[page - 1][0]
@@ -90,6 +94,7 @@ class ModelName(CustomerPortal):
 
 
         month_end = list(seen)[page - 1][1]
+        # print("month_end", month_end)
 
         month_domain = expression.AND([domain, [
             ('check_in', '>=', month_start),
@@ -99,12 +104,13 @@ class ModelName(CustomerPortal):
         domain_calculated = expression.AND([domain, month_domain])
 
         total_count = Attendance.sudo().read_group(domain=domain,fields=['__count'],groupby=['check_in:day'])
-
+        # print("total_count",total_count)
+        # print("len(total_count)",len(total_count))
         pager = portal_pager(
             page=page,
             url=url,
             url_args={'sortby': sortby, 'filterby': filterby},
-            total=len(total_count),
+            total=len(seen)*31,
             step=31,
 
         )
@@ -139,6 +145,7 @@ class ModelName(CustomerPortal):
 
 
 
+        print("values",values)
         return values
 
     def _custom_month_range(self, ref_date):

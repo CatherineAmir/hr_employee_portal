@@ -1,5 +1,5 @@
 /** @odoo-module */
-console.log("employee_portal.js loaded");
+
 import { PortalHomeCounters } from '@portal/js/portal';
 
 PortalHomeCounters.include({
