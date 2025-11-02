@@ -19,6 +19,8 @@ class HrLeave(models.Model):
         "\nThe status is 'Cancelled', when time off request of cancellation is Approved by manager"
         )
 
+    def action_refuse_cancellation_request(self):
+        self.state='validate'
 
     def action_approve(self, check_state=True):
         super(HrLeave, self).action_approve(check_state)
@@ -39,7 +41,7 @@ class HrLeave(models.Model):
         is_leave_user = self.env.user.has_group('hr_holidays.group_hr_holidays_user')
         if state == 'validate1':
             employees = employees.filtered(lambda employee: employee.leave_manager_id  != self.env.user and employee.time_off_approver != self.env.user)
-            print("employees.filtered", employees)
+
             if employees:
                 raise AccessError(_('You cannot first approve a time off for %s, because you are not his time off manager', employees[0].name))
         elif state == 'validate' and not is_leave_user:
@@ -53,5 +55,5 @@ class HrLeave(models.Model):
             leave.can_cancel = (leave.id and leave.employee_id.user_id == self.env.user and leave.state in [
                 'validate', 'validate1'] and leave.date_from and leave.date_from.date() >= now) or \
             (leave.id and leave.employee_id.user_id != self.env.user and leave.state in [
-                'cancellation_request'] and leave.date_from and leave.date_from.date() >= now)
+                'cancellation_request'] )
 

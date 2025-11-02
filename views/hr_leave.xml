@@ -12,6 +12,12 @@
                 <attribute name="groups">base.group_user</attribute>
             </xpath>
 
+            <xpath expr="//button[@name='action_approve']" position="after">
+                <button name="action_refuse_cancellation_request" type="object"
+                        invisible="state!='cancellation_request'"
+                        string="Refuse Cancellation Request and Validate" class="btn btn-warning"/>
+            </xpath>
+
             <!-- Add a new page to the notebook -->
 
         </field>
