@@ -9,5 +9,4 @@ access_mail_activtiy,access_mail_activtiy_portal,mail.model_mail_activity,base.g
 access_hr_leave_portal,access_hr_leave_portal,hr_holidays.model_hr_leave,base.group_portal,1,1,1,1
 access_hr_leave_type_portal,access_hr_leave_type_portal,hr_holidays.model_hr_leave_type,base.group_portal,1,0,0,0
 access_resource_calendar_portal,access_resource_calendar_portal,resource.model_resource_calendar_leaves,base.group_portal,1,1,1,0
-access_resource_planning_slot_portal,access_resource_planning_slot_portal,planning.model_planning_slot,base.group_portal,1,0,0,0
 access_hr_leave_allocation_portal,access_hr_leave_allocation_portal,hr_holidays.model_hr_leave_allocation,base.group_portal,1,1,1,1
