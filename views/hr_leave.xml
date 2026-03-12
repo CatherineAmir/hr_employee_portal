@@ -9,7 +9,7 @@
             <!-- Add fields to an existing group -->
             <xpath expr="//div[@invisible='not employee_id or not overtime_deductible or employee_overtime &lt;= 0']"
                    position="attributes">
-                <attribute name="groups">base.group_user</attribute>
+                <attribute name="groups">hr_holidays.group_hr_holidays_responsible</attribute>
             </xpath>
 
             <xpath expr="//button[@name='action_approve']" position="after">

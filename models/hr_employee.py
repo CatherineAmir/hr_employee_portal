@@ -8,7 +8,9 @@ class HrEmployee(models.Model):
 
     time_off_approver=fields.Many2one('res.users', string="Time of Approver (Manager)")
     leave_manager_id=fields.Many2one('res.users', string="Leave Manager",compute='_compute_leave_manager',store=True)
-
+    calendar_mismatch = fields.Boolean(related='contract_id.calendar_mismatch',
+                                       groups="base.group_system,hr.group_hr_user,hr_egypt.group_hr_limited_user")
+    has_work_entries = fields.Boolean(compute='_compute_has_work_entries', groups="base.group_system,hr.group_hr_user,hr_egypt.group_hr_limited_user")
     @api.depends('time_off_approver')
     def _compute_leave_manager(self):
         for employee in self:

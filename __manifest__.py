@@ -11,7 +11,7 @@
     'company': 'SITA-EGYPT',
     'maintainer': 'SITA-EGYPT',
     'website': 'https://sita-eg.com',
-    'depends': ['base', 'mail','hr','hr_payroll','hr_work_entry','account','portal','hr_holidays',"attendance_rule"],
+    'depends': ['base', 'mail','hr','hr_payroll','hr_work_entry','account','portal','hr_holidays',"attendance_rule","hr_egypt"],
     'data': [
         'security/ir.model.access.csv',
         'views/hr_employee.xml',

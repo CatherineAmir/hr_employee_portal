@@ -49,14 +49,18 @@
         <field name="arch" type="xml">
             <!-- Add fields to an existing group -->
             <xpath expr="//button[@name='action_open_work_entries']" position="attributes">
-                <attribute name="groups">hr.group_hr_user</attribute>
+                <attribute name="groups">hr.group_hr_user,base.group_system,hr.group_hr_user,hr_egypt.group_hr_limited_user</attribute>
             </xpath>
             <xpath expr="//field[@name='resource_calendar_id']" position="attributes">
                 <attribute name="groups">hr.group_hr_user</attribute>
             </xpath>
 
             <xpath position="attributes" expr="//widget[@name='contract_warning_tooltip']">
-                <attribute name="groups">hr.group_hr_user,base.group_system</attribute>
+                <attribute name="groups">base.group_system,hr.group_hr_user</attribute>
+                <attribute name="invisible">calendar_mismatch</attribute>
+            </xpath>
+            <xpath position="attributes" expr="//widget[@name='contract_warning_tooltip']">
+                <attribute name="groups">hr.group_hr_user,base.group_system,</attribute>
             </xpath>
             <!-- Add a new page to the notebook -->
 
