@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.models/*.pyc
+#.wizards/*.pyc
+#.reports/*.pyc
+.models/__pycache__`/
+#.wizards/__pycache__/
+#.reports/__pycache__/
